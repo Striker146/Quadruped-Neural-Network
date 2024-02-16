@@ -14,7 +14,7 @@ public class QuadrupedAgent : Agent
 {
      Rigidbody rBody;
      EnviromentReset enviromentReset;
-    public Transform Target;
+    public Transform target;
     public int MaxSteps = 3000;
     public int currentStep;
     public float bearing;
@@ -23,35 +23,24 @@ public class QuadrupedAgent : Agent
     public MeshRenderer floorMesh;
     public float EpisodeDistance;
     public TextMeshPro scoreDisplay;
-    public TextMeshPro LastScoreDisplay;
+    public TextMeshPro lastScoreDisplay;
     float oldTargetDistance;
     float startingTargetDistance;
     public float maxLivingPunishment;
-    public TrailRenderer trailRenderer;
     public LegInfo[] legs;
 
     void Start()
     {
+        enviromentReset = GetComponentInParent<EnviromentReset>();
+        scoreDisplay = enviromentReset.scoreDisplay;
+        lastScoreDisplay = enviromentReset.lastScoreDisplay;
         rBody = GetComponent<Rigidbody>();
         floorMesh = floor.GetComponent<MeshRenderer>();
-        trailRenderer = GetComponent<TrailRenderer>();
     }
 
-
     public void Reset() {
-        foreach (LegInfo leg in legs)
-        {
-            leg.AllowStickyFoot(false);
-        }
-        this.rBody.angularVelocity = Vector3.zero;
-        this.rBody.velocity = Vector3.zero;
-        this.transform.rotation = Quaternion.Euler(0,0,0);
-        transform.localPosition = new Vector3( 0, 10f, 0);
-        FixedJoint holdJoint = transform.AddComponent<FixedJoint>();
-        oldTargetDistance = Vector3.Distance(transform.localPosition, Target.localPosition);
-        trailRenderer.Clear();
-
-        StartCoroutine(DestroyHoldJointAfterDelay(holdJoint, 1f));
+        Destroy(transform.GetComponent<TrailRenderer>());
+        enviromentReset.Reset();
     }
 
 
@@ -64,10 +53,10 @@ public class QuadrupedAgent : Agent
         float tarDistance = 10f;
         float angle = Random.Range(0f, 360f);
         Vector3 position = new Vector3(tarDistance * Unity.Mathematics.math.cos(angle), 0.5f, tarDistance * Unity.Mathematics.math.sin(angle));
-        Target.localPosition = position;
+        target.localPosition = position;
 
-        EpisodeDistance = Vector3.Distance(Target.localPosition, this.transform.localPosition);
-        oldTargetDistance = Vector3.Distance(transform.localPosition, Target.localPosition);
+        EpisodeDistance = Vector3.Distance(target.localPosition, this.transform.localPosition);
+        oldTargetDistance = Vector3.Distance(transform.localPosition, target.localPosition);
     }
 
     private IEnumerator DestroyHoldJointAfterDelay(FixedJoint holdJoint, float delay)
@@ -85,28 +74,15 @@ public class QuadrupedAgent : Agent
         }
     }
 
-    
-    private float Normalize(float currentValue, float minValue, float maxValue){
-        float NormalizedValue = (currentValue - minValue)/(maxValue - minValue);
-        return NormalizedValue;
-    }
-
-    private Vector3 Normalize(Vector3 currentValue, Vector3 minValue, Vector3 maxValue){
-        Vector3 NormalizedVector = new Vector3(Normalize(currentValue.x,minValue.x,maxValue.x),
-                                                Normalize(currentValue.y,minValue.y,maxValue.y),
-                                                Normalize(currentValue.z,minValue.z,maxValue.z));
-        return NormalizedVector;
-    }
-
     public override void CollectObservations(VectorSensor sensor)
     {
-        Vector3 directionToTarget = Target.position - this.transform.position;
+        Vector3 directionToTarget = target.position - this.transform.position;
         bearing = Vector3.SignedAngle(this.transform.forward, directionToTarget, Vector3.up) / 180;
-        distance = Vector3.Distance(transform.position, Target.position);
+        distance = Vector3.Distance(transform.position, target.position);
         sensor.AddObservation(bearing);
         sensor.AddObservation(distance);
         // Target and Agent positions
-        sensor.AddObservation(Target.localPosition);
+        sensor.AddObservation(target.localPosition);
         sensor.AddObservation(transform.localRotation);
         sensor.AddObservation(transform.localPosition);
 
@@ -127,7 +103,7 @@ public class QuadrupedAgent : Agent
             AddReward(remainingPunishment);
         }
         float score = GetCumulativeReward();
-        LastScoreDisplay.text = $"Last score: {Mathf.Round(score * 100f) / 100f}";
+        lastScoreDisplay.text = $"Last score: {Mathf.Round(score * 100f) / 100f}";
         EndEpisode();
         Reset();
     }
@@ -146,7 +122,7 @@ public class QuadrupedAgent : Agent
 
 
 
-        float distanceToTarget = Vector3.Distance(transform.position, Target.position);
+        float distanceToTarget = Vector3.Distance(transform.position, target.position);
         if (Input.GetKeyDown(KeyCode.Space)){
             Debug.Log(distanceToTarget);
         }
@@ -185,7 +161,7 @@ public class QuadrupedAgent : Agent
         float punishScore = -maxLivingPunishment / MaxSteps;
         AddReward(punishScore);
 
-        float targetDistance = Vector3.Distance(transform.localPosition, Target.localPosition);
+        float targetDistance = Vector3.Distance(transform.localPosition, target.localPosition);
         float reward = (-targetDistance + oldTargetDistance) / 2;
         AddReward(reward);
         oldTargetDistance = targetDistance;

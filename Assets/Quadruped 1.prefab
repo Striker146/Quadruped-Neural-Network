@@ -307,8 +307,8 @@ MonoBehaviour:
     maxStep: 0
   hasUpgradedFromAgentParameters: 1
   MaxStep: 0
-  Target: {fileID: 0}
-  MaxSteps: 3000
+  target: {fileID: 0}
+  MaxSteps: 2000
   currentStep: 0
   bearing: 0
   distance: 0
@@ -316,9 +316,8 @@ MonoBehaviour:
   floorMesh: {fileID: 0}
   EpisodeDistance: 0
   scoreDisplay: {fileID: 0}
-  LastScoreDisplay: {fileID: 0}
+  lastScoreDisplay: {fileID: 0}
   maxLivingPunishment: 3
-  trailRenderer: {fileID: 0}
   legs:
   - {fileID: 94463238649679356}
   - {fileID: 47708860625653456}
